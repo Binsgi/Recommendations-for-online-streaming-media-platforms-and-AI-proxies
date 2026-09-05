@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>鸭乐</title>
+  <!-- 样式 -->
+  <link rel="stylesheet" href="./css/index.css">
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="play_wrap" id="player">
+      <div class="search_bar">
+        <img src="images/player_title.png" alt="" />
+        <!-- 搜索歌曲 -->
+        <input type="text" autocomplete="off" v-model='query' @keyup.enter="searchMusic();" />
+        <button class="search-icon-btn" @click="playMusic(item.id, this.music)"></button>
+      </div>
+      <div class="center_con">
+        <!-- 搜索歌曲列表 -->
+        <div class='song_wrapper' ref='song_wrapper'>
+          <ul class="song_list">
+
+            <li v-for="item in musicList">
+              <!-- 点击放歌 -->
+              <a href="javascript:;" @click="playMusic(item.id,this.music)"></a>
+              <b>{{ item.name }}</b>
+              <span v-if="item.mvid!=0"><i @click="playMv(item.mvid)"></i></span>
+            </li>
+          </ul>
+          <img src="images/line.png" class="switch_btn" alt="">
+        </div>
+        <!-- 歌曲信息容器 -->
+        <div class="player_con" :class="{playing:isPlay}">
+          <img src="images/player_bar.png" class="play_bar" />
+          <!-- 黑胶碟片 -->
+          <img src="images/disc.png" class="disc autoRotate" />
+          <img :src="musicCover==''?'./images/cover.png':musicCover" class="cover autoRotate" />
+        </div>
+        <!-- 评论容器 -->
+        <div class="comment_wrapper" ref='comment_wrapper'>
+          <h5 class='title'>控制</h5>
+          <div class='comment_list'>
+            <!-- 音质 -->
+            <label for="Sound" style="float: inline-start;">音质：</label>
+            <div class="soundQuality">
+              <!-- <div > -->
+                <div 
+                class="sound-item" 
+                :class="{ active: SoundQ === 'standard' }" 
+                @click="changeS('standard')"
+                >标准</div>
+                <div 
+                class="sound-item" 
+                :class="{ active: SoundQ === 'higher' }" 
+                @click="changeS('higher')"
+                >较高</div>  
+                <div 
+                class="sound-item" 
+                :class="{ active: SoundQ === 'lossless' }" 
+                @click="changeS('lossless')"
+                >无损</div>
+                <div 
+                class="sound-item" 
+                :class="{ active: SoundQ === 'hires' }" 
+                @click="changeS('hires')"
+                >Hi-Res</div>
+                <div 
+                class="sound-item" 
+                :class="{ active: SoundQ === 'jyeffect' }" 
+                @click="changeS('jyeffect')"
+                >高清环绕声</div>
+                <div 
+                class="sound-item" 
+                :class="{ active: SoundQ === 'sky' }" 
+                @click="changeS('sky')"
+                >沉浸环绕声</div>
+                <div 
+                class="sound-item" 
+                :class="{ active: SoundQ === 'jymaster' }" 
+                @click="changeS('jymaster')"
+                >超清母带</div>
+              <!-- </div> -->
+              
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      <div class="audio_con">
+        <audio ref='audio' :src="musicUrl" @play="play" @pause="pause" controls autoplay loop class="myaudio"></audio>
+      </div class="video_con"  style="display: none;">
+        <video :src="mvUrl" controls="controls" v-show="isShow"></video>
+        <div class="mask" @click="hide"></div>
+    </div>
+  </div>
+  <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <!-- 官网提供的 axios 在线地址 -->
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</body>
+
+</html>

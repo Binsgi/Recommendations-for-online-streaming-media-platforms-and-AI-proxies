@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo Player - 现代化智能音乐播放器 & AI Agent</title>
+  <!-- 样式引用 -->
+  <link rel="stylesheet" href="css/modern.css" />
+  <link rel="stylesheet" href="css/index.css" />
+</head>
+<body>
+  <div class="app-backdrop"></div>
+
+  <div id="app">
+    <!-- ==================== 顶部导航栏 ==================== -->
+    <header class="top-navbar">
+      <div class="brand" @click="activeTab = 'search'">
+        <img src="images/player_title.png" alt="Logo" />
+        <span>Demo Player</span>
+        <span class="brand-badge">C++17 & AI</span>
+      </div>
+
+      <!-- 导航标签 -->
+      <nav class="nav-tabs">
+        <div class="nav-tab-item" :class="{ active: activeTab === 'search' }" @click="activeTab = 'search'">
+          🔍 乐库搜索
+        </div>
+        <div class="nav-tab-item" :class="{ active: activeTab === 'playlist' }" @click="activeTab = 'playlist'">
+          📻 歌单广场
+        </div>
+        <div class="nav-tab-item" :class="{ active: activeTab === 'favorite' }" @click="activeTab = 'favorite'">
+          ❤️ 我的收藏
+        </div>
+        <div class="nav-tab-item" :class="{ active: activeTab === 'history' }" @click="activeTab = 'history'">
+          🕒 播放历史
+        </div>
+        <div class="nav-tab-item agent-tab" :class="{ active: activeTab === 'agent' }" @click="activeTab = 'agent'">
+          🤖 AI 音乐助手
+        </div>
+        <div class="nav-tab-item" :class="{ active: activeTab === 'vinyl' }" @click="activeTab = 'vinyl'">
+          💿 经典黑胶
+        </div>
+      </nav>
+
+      <!-- 搜索栏与建议联想 -->
+      <div class="search-wrapper" ref="searchGroup">
+        <div class="search-input-group">
+          <input 
+            type="text" 
+            placeholder="搜索歌曲、歌手..." 
+            v-model="query" 
+            @input="onSearchInput"
+            @keyup.enter="searchMusic" 
+          />
+          <img src="images/zoom.png" class="search-icon" @click="searchMusic" alt="search" />
+        </div>
+        <!-- 联想下拉菜单 -->
+        <div class="search-suggest-dropdown" v-if="showSuggestions && searchSuggestions.length > 0">
+          <div 
+            class="suggest-item" 
+            v-for="(sug, index) in searchSuggestions" 
+            :key="index"
+            @click="selectSuggestion(sug.keyword)"
+          >
+            <span>🔍 {{ sug.keyword }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户登录状态 -->
+      <div class="user-zone">
+        <template v-if="currentUser">
+          <img :src="currentUser.avatar_url || 'images/person.png'" class="user-avatar" :title="currentUser.nickname" />
+          <span style="font-size: 13px; font-weight: 600;">{{ currentUser.nickname || currentUser.username }}</span>
+          <button class="btn-outline" style="padding: 4px 10px; font-size: 11px;" @click="logout">退出</button>
+        </template>
+        <template v-else>
+          <button class="btn-primary" @click="openAuth('login')">登录 / 注册</button>
+        </template>
+      </div>
+    </header>
+
+    <!-- ==================== 主体视窗 ==================== -->
+    <main class="main-content-view">
+      
+      <!-- 1. 乐库搜索结果视窗 -->
+      <section v-if="activeTab === 'search'">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="font-size: 16px; font-weight: 700;">歌曲列表 (已智能剔除无效/不可播放曲目)</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">共找到 {{ musicList.length }} 首可播放曲目</span>
+        </div>
+
+        <table class="song-grid-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>歌曲名称</th>
+              <th>歌手</th>
+              <th>专辑</th>
+              <th>时长</th>
+              <th style="width: 80px; text-align: center;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              v-for="(song, idx) in musicList" 
+              :key="song.id" 
+              class="song-row"
+              :class="{ 'playing-row': currentSong.id === song.id }"
+              @dblclick="playMusic(song, musicList)"
+            >
+              <td>{{ idx + 1 }}</td>
+              <td class="song-name-cell">
+                <img :src="(song.al && song.al.picUrl) || song.picUrl || 'images/cover.png'" class="song-cover-thumb" />
+                <span>{{ song.name }}</span>
+              </td>
+              <td>{{ (song.ar && song.ar[0] && song.ar[0].name) || (song.artists && song.artists[0] && song.artists[0].name) || song.artist || '未知' }}</td>
+              <td>{{ (song.al && song.al.name) || song.album || '-' }}</td>
+              <td>{{ formatSeconds(song.dt ? Math.floor(song.dt / 1000) : song.duration) }}</td>
+              <td style="text-align: center;">
+                <button class="fav-btn" @click.stop="toggleCurrentFavorite(song)" title="收藏">
+                  ❤️
+                </button>
+                <button class="fav-btn" style="color: var(--primary-color); margin-left: 8px;" @click.stop="playMusic(song, musicList)" title="播放">
+                  ▶
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 2. 歌单广场 -->
+      <section v-if="activeTab === 'playlist'">
+        <!-- 分类标签 -->
+        <div class="category-chips">
+          <div 
+            class="cat-chip" 
+            v-for="cat in categories" 
+            :key="cat"
+            :class="{ active: currentCategory === cat }"
+            @click="selectCategory(cat)"
+          >
+            {{ cat }}
+          </div>
+        </div>
+
+        <!-- 歌单卡片网格 -->
+        <div class="playlist-cards-grid">
+          <div 
+            class="playlist-card" 
+            v-for="pl in hotPlaylists" 
+            :key="pl.id"
+            @click="openPlaylistDetail(pl)"
+          >
+            <img :src="pl.coverImgUrl" class="playlist-card-cover" loading="lazy" />
+            <div class="playlist-card-title">{{ pl.name }}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">播放量: {{ Math.floor(pl.playCount / 10000) }}万</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 我的收藏 -->
+      <section v-if="activeTab === 'favorite'">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="font-size: 16px; font-weight: 700;">我的收藏歌单</h3>
+          <button class="btn-primary" style="font-size: 12px;" @click="playMusic(favoritesList[0], favoritesList)" v-if="favoritesList.length > 0">
+            ▶ 播放全部
+          </button>
+        </div>
+
+        <div v-if="!currentUser" style="text-align: center; padding: 60px 0;">
+          <p style="color: var(--text-muted); margin-bottom: 14px;">您尚未登录，登录后即可查看和同步收藏歌曲</p>
+          <button class="btn-primary" @click="openAuth('login')">立即登录</button>
+        </div>
+
+        <table class="song-grid-table" v-else-if="favoritesList.length > 0">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>歌曲名称</th>
+              <th>歌手</th>
+              <th>专辑</th>
+              <th>时长</th>
+              <th style="width: 80px; text-align: center;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              v-for="(song, idx) in favoritesList" 
+              :key="song.id" 
+              class="song-row"
+              :class="{ 'playing-row': currentSong.id === song.id }"
+              @dblclick="playMusic(song, favoritesList)"
+            >
+              <td>{{ idx + 1 }}</td>
+              <td class="song-name-cell">
+                <img :src="song.picUrl || 'images/cover.png'" class="song-cover-thumb" />
+                <span>{{ song.name }}</span>
+              </td>
+              <td>{{ song.artist }}</td>
+              <td>{{ song.album || '-' }}</td>
+              <td>{{ formatSeconds(song.duration) }}</td>
+              <td style="text-align: center;">
+                <button class="fav-btn is-fav" @click.stop="toggleCurrentFavorite(song)" title="取消收藏">❤️</button>
+                <button class="fav-btn" style="color: var(--primary-color); margin-left: 8px;" @click.stop="playMusic(song, favoritesList)" title="播放">▶</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else style="text-align: center; padding: 60px 0; color: var(--text-muted);">
+          暂无收藏歌曲，快去探索你喜欢的音乐吧！
+        </div>
+      </section>
+
+      <!-- 4. 播放历史 -->
+      <section v-if="activeTab === 'history'">
+        <div style="margin-bottom: 16px;">
+          <h3 style="font-size: 16px; font-weight: 700;">最近播放历史</h3>
+        </div>
+
+        <div v-if="!currentUser" style="text-align: center; padding: 60px 0;">
+          <p style="color: var(--text-muted); margin-bottom: 14px;">登录后可自动保存与同步听歌历史</p>
+          <button class="btn-primary" @click="openAuth('login')">立即登录</button>
+        </div>
+
+        <table class="song-grid-table" v-else-if="historyList.length > 0">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>歌曲名称</th>
+              <th>歌手</th>
+              <th>播放时间</th>
+              <th style="width: 80px; text-align: center;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              v-for="(song, idx) in historyList" 
+              :key="song.id" 
+              class="song-row"
+              @dblclick="playMusic(song, historyList)"
+            >
+              <td>{{ idx + 1 }}</td>
+              <td class="song-name-cell">
+                <img :src="song.picUrl || 'images/cover.png'" class="song-cover-thumb" />
+                <span>{{ song.name }}</span>
+              </td>
+              <td>{{ song.artist }}</td>
+              <td style="color: var(--text-muted); font-size: 12px;">{{ song.played_at }}</td>
+              <td style="text-align: center;">
+                <button class="fav-btn" style="color: var(--primary-color);" @click.stop="playMusic(song, historyList)">▶</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else style="text-align: center; padding: 60px 0; color: var(--text-muted);">
+          暂无播放记录
+        </div>
+      </section>
+
+      <!-- 5. 🤖 AI Agent 智能推荐工作台 -->
+      <section v-if="activeTab === 'agent'" class="agent-workspace">
+        <!-- 左侧：Agent 输入控制面板 -->
+        <div class="agent-control-panel">
+          <div class="agent-header">
+            <img src="images/person01.png" class="agent-avatar-img" />
+            <div class="agent-title">
+              <h3>MelodyAI 音乐智能体</h3>
+              <p>感知心境 · 智能推荐 · 协同过滤</p>
+            </div>
+          </div>
+
+          <div class="agent-prompt-box">
+            <label style="font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block;">你的听歌情境或心情：</label>
+            <textarea v-model="agentPrompt" placeholder="例如：深夜写代码，来几首安静专注的Lo-Fi或轻音乐..."></textarea>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block;">情境预设灵感：</label>
+            <div class="agent-presets">
+              <div 
+                class="preset-chip" 
+                v-for="preset in agentPresetChips" 
+                :key="preset"
+                @click="usePresetChip(preset)"
+              >
+                {{ preset }}
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-agent-generate" :disabled="agentLoading" @click="requestAgentRecommendation">
+            {{ agentLoading ? '🤖 智能推理中...' : '✨ 开启个性化推荐' }}
+          </button>
+        </div>
+
+        <!-- 右侧：推荐卡片流 -->
+        <div class="agent-results-stream">
+          <template v-if="agentReply">
+            <!-- 智能体对话气泡 -->
+            <div class="agent-speech-bubble">
+              <div style="font-weight: 700; margin-bottom: 4px;">💬 MelodyAI 说：</div>
+              <div>{{ agentReply.reply_text }}</div>
+              <div style="margin-top: 8px;">
+                <span class="agent-tag-badge" v-for="tag in agentReply.extracted_tags" :key="tag"># {{ tag }}</span>
+              </div>
+            </div>
+
+            <!-- 一键播放推荐列表 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0;">
+              <span style="font-size: 13px; font-weight: 700;">为您匹配到 {{ agentReply.songs.length }} 首专属单曲</span>
+              <button class="btn-primary" style="font-size: 12px;" @click="playAllAgentSongs">▶ 播放全部推荐曲目</button>
+            </div>
+
+            <!-- 推荐曲目卡片列表 -->
+            <div 
+              class="agent-song-card" 
+              v-for="song in agentReply.songs" 
+              :key="song.id"
+            >
+              <div class="agent-song-info">
+                <img :src="(song.al && song.al.picUrl) || song.picUrl || 'images/cover.png'" class="song-cover-thumb" style="width: 52px; height: 52px;" />
+                <div>
+                  <div style="font-weight: 600; font-size: 14px;">
+                    <span class="match-score-badge">{{ song.match_score }}% 匹配</span>
+                    {{ song.name }}
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                    {{ (song.ar && song.ar[0] && song.ar[0].name) || (song.artists && song.artists[0] && song.artists[0].name) || song.artist }}
+                  </div>
+                  <div class="agent-reason-quote">
+                    💡 {{ song.agent_reason }}
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="fav-btn" @click="toggleCurrentFavorite(song)" title="收藏">❤️</button>
+                <button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" @click="playMusic(song, agentReply.songs)">
+                  ▶ 试听
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <div v-else style="text-align: center; padding: 120px 0; color: var(--text-muted);">
+            <div style="font-size: 42px; margin-bottom: 12px;">🤖</div>
+            <p>告诉 AI 你的当下的心情与偏好，为您生成专属音乐推荐与理由</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. 经典黑胶唱片与歌词同步视窗 -->
+      <section v-if="activeTab === 'vinyl'" class="vinyl-disc-view">
+        <!-- 唱片动效容器 -->
+        <div class="player_con" :class="{ playing: isPlay }">
+          <img src="images/player_bar.png" class="play_bar arm-img" />
+          <img src="images/disc.png" class="disc-img" />
+          <img :src="currentSong.cover" class="cover-img" />
+        </div>
+
+        <!-- 歌词同步滚动展示 -->
+        <div class="lyric-wrapper">
+          <div 
+            class="lyric-scroll-box"
+            :style="{ transform: `translateY(-${currentLyricIndex * 34}px)` }"
+          >
+            <div 
+              class="lyric-line" 
+              v-for="(item, idx) in rawLyrics" 
+              :key="idx"
+              :class="{ active: currentLyricIndex === idx }"
+            >
+              {{ item.text }}
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ==================== 底部播放器控制器 ==================== -->
+    <footer class="bottom-player-bar">
+      <!-- 歌曲信息 -->
+      <div class="current-track-info">
+        <img :src="currentSong.cover" class="current-track-cover" />
+        <div class="track-meta">
+          <h4>{{ currentSong.name }}</h4>
+          <p>{{ currentSong.artist }}</p>
+        </div>
+        <button class="fav-btn" :class="{ 'is-fav': isCurrentSongFav }" @click="toggleCurrentFavorite()" title="收藏当前歌曲">
+          ❤️
+        </button>
+      </div>
+
+      <!-- 控制中心 -->
+      <div class="playback-controls">
+        <div class="ctrl-buttons">
+          <button class="ctrl-btn" @click="togglePlayMode" :title="playMode">
+            {{ playMode === 'order' ? '🔁' : (playMode === 'single' ? '🔂' : '🔀') }}
+          </button>
+          <button class="ctrl-btn" @click="playPrev" title="上一首">⏮</button>
+          <button class="ctrl-btn play-toggle" @click="togglePlay" title="播放/暂停">
+            {{ isPlay ? '⏸' : '▶' }}
+          </button>
+          <button class="ctrl-btn" @click="playNext" title="下一首">⏭</button>
+        </div>
+
+        <div class="progress-container">
+          <span>{{ formatCurrentTime }}</span>
+          <input 
+            type="range" 
+            class="progress-bar-slider" 
+            min="0" 
+            max="100" 
+            step="0.1" 
+            :value="progressPercent" 
+            @input="onProgressChange" 
+          />
+          <span>{{ formatTotalDuration }}</span>
+        </div>
+      </div>
+
+      <!-- 音质与音量 -->
+      <div class="extra-controls">
+        <select class="quality-select" v-model="soundQuality" @change="changeSoundQuality(soundQuality)">
+          <option value="standard">标准音质</option>
+          <option value="higher">极高音质</option>
+          <option value="lossless">无损音质</option>
+          <option value="hires">Hi-Res</option>
+        </select>
+        <span style="font-size: 14px;">🔊</span>
+        <input 
+          type="range" 
+          class="progress-bar-slider" 
+          style="width: 80px;" 
+          min="0" 
+          max="1" 
+          step="0.05" 
+          :value="volume" 
+          @input="onVolumeChange" 
+        />
+      </div>
+    </footer>
+
+    <!-- 原生音频标签 -->
+    <audio ref="audio" class="myaudio" style="display: none;"></audio>
+
+    <!-- ==================== 认证弹窗模态框 ==================== -->
+    <div class="modal-mask" v-if="showAuthModal" @click.self="showAuthModal = false">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-tabs">
+            <span class="modal-tab" :class="{ active: authMode === 'login' }" @click="authMode = 'login'">登录</span>
+            <span class="modal-tab" :class="{ active: authMode === 'register' }" @click="authMode = 'register'">注册</span>
+            <span class="modal-tab" :class="{ active: authMode === 'forgot' }" @click="authMode = 'forgot'">重置密码</span>
+          </div>
+          <span style="cursor: pointer; font-size: 18px;" @click="showAuthModal = false">✕</span>
+        </div>
+
+        <!-- 登录表单 -->
+        <form v-if="authMode === 'login'" @submit.prevent="handleAuthSubmit">
+          <div class="form-group">
+            <label>账号 / 邮箱 / 手机号</label>
+            <input type="text" class="form-input" v-model="authForm.account" placeholder="请输入用户名或邮箱" required />
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" class="form-input" v-model="authForm.password" placeholder="请输入密码" required />
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; margin-top: 10px;">立即登录</button>
+        </form>
+
+        <!-- 注册表单 (带验证码) -->
+        <form v-if="authMode === 'register'" @submit.prevent="handleAuthSubmit">
+          <div class="form-group">
+            <label>用户名</label>
+            <input type="text" class="form-input" v-model="authForm.account" placeholder="设置用户名" required />
+          </div>
+          <div class="form-group">
+            <label>昵称 (选填)</label>
+            <input type="text" class="form-input" v-model="authForm.nickname" placeholder="输入个性昵称" />
+          </div>
+          <div class="form-group">
+            <label>手机号 / 邮箱 (接收验证码)</label>
+            <div class="input-with-btn">
+              <input type="text" class="form-input" v-model="authForm.phone_email" placeholder="输入手机号或邮箱" required />
+              <button type="button" class="btn-code" :disabled="codeCountdown > 0" @click="handleSendCode">
+                {{ codeCountdown > 0 ? `${codeCountdown}s` : '获取验证码' }}
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>验证码</label>
+            <input type="text" class="form-input" v-model="authForm.code" placeholder="6位验证码" required />
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" class="form-input" v-model="authForm.password" placeholder="设置登录密码" required />
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; margin-top: 10px;">完成注册</button>
+        </form>
+
+        <!-- 修改/找回密码表单 -->
+        <form v-if="authMode === 'forgot'" @submit.prevent="handleAuthSubmit">
+          <div class="form-group">
+            <label>绑定的手机号 / 邮箱</label>
+            <div class="input-with-btn">
+              <input type="text" class="form-input" v-model="authForm.phone_email" placeholder="输入手机号或邮箱" required />
+              <button type="button" class="btn-code" :disabled="codeCountdown > 0" @click="handleSendCode">
+                {{ codeCountdown > 0 ? `${codeCountdown}s` : '获取验证码' }}
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>验证码</label>
+            <input type="text" class="form-input" v-model="authForm.code" placeholder="输入验证码" required />
+          </div>
+          <div class="form-group">
+            <label>新密码</label>
+            <input type="password" class="form-input" v-model="authForm.new_password" placeholder="输入新密码" required />
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; margin-top: 10px;">确认重置密码</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast-msg" v-if="toastMessage">
+      {{ toastMessage }}
+    </div>
+  </div>
+
+  <!-- CDN 依赖 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <!-- 前端业务逻辑脚本 -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

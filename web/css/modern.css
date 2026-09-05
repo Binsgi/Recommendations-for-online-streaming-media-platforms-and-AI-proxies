@@ -1,0 +1,901 @@
+/* ========================================================
+   Demo Player Modern Glassmorphism & AI Agent Stylesheet
+   ======================================================== */
+
+:root {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-glow: rgba(59, 130, 246, 0.4);
+  --accent-color: #ec4899;
+  --agent-color: #8b5cf6;
+  --agent-glow: rgba(139, 92, 246, 0.35);
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  --bg-dark-glass: rgba(15, 23, 42, 0.85);
+  --card-glass: rgba(255, 255, 255, 0.65);
+  --border-glass: rgba(255, 255, 255, 0.3);
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.16);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: var(--text-main);
+  background: url('../images/bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Background overlay filter */
+.app-backdrop {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 40%),
+              radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.18), transparent 40%),
+              rgba(241, 245, 249, 0.55);
+  backdrop-filter: blur(12px);
+  z-index: 1;
+}
+
+#app {
+  position: relative;
+  z-index: 2;
+  width: 94vw;
+  max-width: 1280px;
+  height: 92vh;
+  margin: 4vh auto;
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ==================== 顶部导航条 ==================== */
+.top-navbar {
+  height: 64px;
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.brand img {
+  height: 36px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.brand-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: white;
+  letter-spacing: 0.5px;
+}
+
+/* 导航标签 */
+.nav-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(241, 245, 249, 0.8);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.nav-tab-item {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-tab-item:hover {
+  color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.nav-tab-item.active {
+  background: #ffffff;
+  color: var(--primary-color);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-tab-item.agent-tab {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+  color: var(--agent-color);
+}
+
+.nav-tab-item.agent-tab.active {
+  background: linear-gradient(135deg, var(--agent-color), #a855f7);
+  color: #ffffff;
+  box-shadow: 0 4px 14px var(--agent-glow);
+}
+
+/* 搜索栏与智能联想 */
+.search-wrapper {
+  position: relative;
+  width: 280px;
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 6px 14px;
+  transition: all 0.2s ease;
+}
+
+.search-input-group:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.search-input-group input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  background: transparent;
+}
+
+.search-icon {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.search-suggest-dropdown {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid #e2e8f0;
+  padding: 8px 0;
+  z-index: 100;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.suggest-item {
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-main);
+}
+
+.suggest-item:hover {
+  background: #f1f5f9;
+  color: var(--primary-color);
+}
+
+/* 用户状态区域 */
+.user-zone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  object-fit: cover;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  background: #f8fafc;
+}
+
+/* ==================== 中间主视窗 ==================== */
+.main-content-view {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  padding: 20px;
+}
+
+/* 歌曲列表样式 */
+.song-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.song-grid-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.song-row {
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.song-row:hover {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.song-row.playing-row {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.song-row td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+}
+
+.song-cover-thumb {
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+.song-name-cell {
+  display: flex;
+  align-items: center;
+}
+
+.fav-btn {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.fav-btn.is-fav {
+  color: #ef4444;
+}
+
+.fav-btn:hover {
+  transform: scale(1.2);
+}
+
+/* 歌单分类与热门歌单 */
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cat-chip {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cat-chip.active, .cat-chip:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.playlist-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.playlist-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.playlist-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.playlist-card-cover {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.playlist-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  height: 36px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ==================== 🤖 AI Agent 推荐界面 ==================== */
+.agent-workspace {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  height: 100%;
+}
+
+.agent-control-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 20px var(--agent-glow);
+}
+
+.agent-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.agent-avatar-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--agent-color);
+}
+
+.agent-title h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.agent-title p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.agent-prompt-box textarea {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.agent-prompt-box textarea:focus {
+  border-color: var(--agent-color);
+  box-shadow: 0 0 0 3px var(--agent-glow);
+}
+
+.agent-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preset-chip {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: #ede9fe;
+  color: #6d28d9;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-chip:hover {
+  background: #ddd6fe;
+}
+
+.btn-agent-generate {
+  background: linear-gradient(135deg, var(--agent-color), #a855f7);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--agent-glow);
+  transition: all 0.2s;
+}
+
+.btn-agent-generate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--agent-glow);
+}
+
+/* Agent 推荐结果卡片流 */
+.agent-results-stream {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 6px;
+}
+
+.agent-speech-bubble {
+  background: linear-gradient(135deg, rgba(237, 233, 254, 0.9), rgba(245, 243, 255, 0.9));
+  border-left: 4px solid var(--agent-color);
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4c1d95;
+}
+
+.agent-tag-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #7c3aed;
+  color: white;
+  margin-right: 6px;
+  margin-top: 6px;
+}
+
+.agent-song-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-md);
+  border: 1px solid #e2e8f0;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.25s;
+}
+
+.agent-song-card:hover {
+  border-color: var(--agent-color);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.agent-song-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.agent-reason-quote {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border-left: 2px solid var(--agent-color);
+}
+
+.match-score-badge {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-right: 6px;
+}
+
+/* ==================== 经典黑胶唱片视窗 ==================== */
+.vinyl-disc-view {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 100%;
+}
+
+.disc-container {
+  position: relative;
+  width: 320px;
+  height: 320px;
+}
+
+.disc-img {
+  width: 100%;
+  height: 100%;
+  animation: rotateDisc 20s linear infinite paused;
+}
+
+.cover-img {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  top: 60px;
+  left: 60px;
+  animation: rotateDisc 20s linear infinite paused;
+  object-fit: cover;
+}
+
+.arm-img {
+  position: absolute;
+  top: -40px;
+  left: 140px;
+  width: 100px;
+  z-index: 10;
+  transform-origin: 12px 12px;
+  transform: rotate(-30deg);
+  transition: transform 0.5s ease;
+}
+
+.playing .disc-img,
+.playing .cover-img {
+  animation-play-state: running;
+}
+
+.playing .arm-img {
+  transform: rotate(0deg);
+}
+
+@keyframes rotateDisc {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 歌词视窗 (精准毫秒滚动) */
+.lyric-wrapper {
+  width: 440px;
+  height: 340px;
+  overflow-y: hidden;
+  text-align: center;
+  position: relative;
+  mask-image: linear-gradient(transparent, black 20%, black 80%, transparent);
+}
+
+.lyric-scroll-box {
+  transition: transform 0.3s ease-out;
+  padding: 140px 0;
+}
+
+.lyric-line {
+  min-height: 34px;
+  line-height: 34px;
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+}
+
+.lyric-line.active {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-color);
+  transform: scale(1.08);
+}
+
+/* ==================== 底部通用播放控制器 ==================== */
+.bottom-player-bar {
+  height: 80px;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  gap: 20px;
+}
+
+.current-track-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 240px;
+}
+
+.current-track-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}
+
+.track-meta h4 {
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-meta p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.playback-controls {
+  flex: 1;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ctrl-buttons {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.ctrl-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: transform 0.15s;
+}
+
+.ctrl-btn.play-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.ctrl-btn:hover {
+  transform: scale(1.15);
+}
+
+.progress-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.progress-bar-slider {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  background: #cbd5e1;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.progress-bar-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+}
+
+/* 音量与音质扩展 */
+.extra-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 240px;
+  justify-content: flex-end;
+}
+
+.quality-select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
+  outline: none;
+  background: white;
+}
+
+/* ==================== 认证与登录模态弹窗 ==================== */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  width: 380px;
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 2px solid #f1f5f9;
+  margin-bottom: 20px;
+}
+
+.modal-tab {
+  padding-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.modal-tab.active {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--primary-color);
+}
+
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-code {
+  white-space: nowrap;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Toast 提示 */
+.toast-msg {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.9);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}

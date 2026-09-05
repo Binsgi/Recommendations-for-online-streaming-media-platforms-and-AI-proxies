@@ -1,0 +1,27 @@
+# Build outputs
+build/
+bin/
+*.o
+*.obj
+*.so
+*.a
+*.exe
+
+# IDE and OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs and Runtime data
+*.log
+logs/
+cache/
+
+# SQLite legacy database
+*.db
+*.sqlite
+*.sqlite3
