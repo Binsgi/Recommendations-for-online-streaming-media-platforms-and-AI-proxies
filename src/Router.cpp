@@ -213,7 +213,26 @@ void Router::registerRoutes() {
         std::string prompt = body["prompt"].as_string();
         std::string mood = body["mood"].as_string();
         std::string genre = body["genre"].as_string();
-        return HttpResponse::json(AgentService::getInstance().generateRecommendation(req.user_id, prompt, mood, genre));
+
+        LLMConfig llm_conf;
+        if (body.contains("llm_config") && body["llm_config"].is_object()) {
+            json lc = body["llm_config"];
+            llm_conf.endpoint = lc["endpoint"].as_string("https://api.deepseek.com/v1");
+            llm_conf.api_key = lc["api_key"].as_string("");
+            llm_conf.model = lc["model"].as_string("deepseek-chat");
+            llm_conf.enabled = lc["enabled"].as_bool(false);
+        }
+
+        return HttpResponse::json(AgentService::getInstance().generateRecommendation(req.user_id, prompt, mood, genre, llm_conf));
+    });
+
+    addRoute("POST", "/api/agent/test-llm", [](const HttpRequest& req) {
+        json body = req.getJsonBody();
+        LLMConfig llm_conf;
+        llm_conf.endpoint = body["endpoint"].as_string("https://api.deepseek.com/v1");
+        llm_conf.api_key = body["api_key"].as_string("");
+        llm_conf.model = body["model"].as_string("deepseek-chat");
+        return HttpResponse::json(AgentService::getInstance().testLLM(llm_conf));
     });
 }
 

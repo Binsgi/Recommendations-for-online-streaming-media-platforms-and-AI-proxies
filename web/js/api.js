@@ -86,5 +86,6 @@ window.API = {
   getHistory: () => apiClient.get('/api/history/list'),
 
   // 🤖 AI Agent 智能推荐
-  agentRecommend: (data) => apiClient.post('/api/agent/recommend', data)
+  agentRecommend: (data) => apiClient.post('/api/agent/recommend', data),
+  testLLM: (data) => apiClient.post('/api/agent/test-llm', data)
 };

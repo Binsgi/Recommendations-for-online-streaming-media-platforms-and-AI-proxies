@@ -58,6 +58,17 @@ new Vue({
         '🍵 唯美国风新潮'
       ],
 
+      // ⚙️ 前端大模型 API 配置
+      showLlmModal: false,
+      testingLlm: false,
+      llmConfig: {
+        enabled: true,
+        provider: 'deepseek',
+        endpoint: 'https://api.deepseek.com/v1',
+        api_key: '',
+        model: 'deepseek-chat'
+      },
+
       // 播放器核心状态
       currentSong: {
         id: '',
@@ -104,6 +115,7 @@ new Vue({
 
   created() {
     this.checkLocalAuth();
+    this.loadLlmConfig();
     this.searchMusic();
     this.loadHotPlaylists();
   },
@@ -610,6 +622,64 @@ new Vue({
     },
 
     // ==================== 🤖 AI Agent 智能推荐 ====================
+    loadLlmConfig() {
+      const saved = localStorage.getItem('demo_player_llm');
+      if (saved) {
+        try {
+          this.llmConfig = JSON.parse(saved);
+        } catch (e) {}
+      }
+    },
+
+    openLlmModal() {
+      this.showLlmModal = true;
+    },
+
+    onLlmProviderChange() {
+      if (this.llmConfig.provider === 'deepseek') {
+        this.llmConfig.endpoint = 'https://api.deepseek.com/v1';
+        this.llmConfig.model = 'deepseek-chat';
+      } else if (this.llmConfig.provider === 'openai') {
+        this.llmConfig.endpoint = 'https://api.openai.com/v1';
+        this.llmConfig.model = 'gpt-4o-mini';
+      } else if (this.llmConfig.provider === 'qwen') {
+        this.llmConfig.endpoint = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+        this.llmConfig.model = 'qwen-plus';
+      } else if (this.llmConfig.provider === 'moonshot') {
+        this.llmConfig.endpoint = 'https://api.moonshot.cn/v1';
+        this.llmConfig.model = 'moonshot-v1-8k';
+      } else if (this.llmConfig.provider === 'ollama') {
+        this.llmConfig.endpoint = 'http://localhost:11434/v1';
+        this.llmConfig.model = 'llama3';
+      }
+    },
+
+    async testLlmConfig() {
+      if (!this.llmConfig.api_key && this.llmConfig.provider !== 'ollama') {
+        this.showToast('请先输入 API Key');
+        return;
+      }
+      this.testingLlm = true;
+      try {
+        const res = await API.testLLM(this.llmConfig);
+        if (res.code === 200) {
+          this.showToast(res.message);
+        } else {
+          this.showToast(res.message || '测试连接失败');
+        }
+      } catch (err) {
+        this.showToast('测试连接失败，请检查网络或配置');
+      } finally {
+        this.testingLlm = false;
+      }
+    },
+
+    saveLlmConfig() {
+      localStorage.setItem('demo_player_llm', JSON.stringify(this.llmConfig));
+      this.showLlmModal = false;
+      this.showToast('大模型配置已保存！');
+    },
+
     usePresetChip(chipText) {
       this.agentPrompt = chipText.replace(/^[^\s]+\s*/, '');
       this.requestAgentRecommendation();
@@ -626,7 +696,8 @@ new Vue({
         const res = await API.agentRecommend({
           prompt: this.agentPrompt.trim(),
           mood: this.agentMood,
-          genre: this.agentGenre
+          genre: this.agentGenre,
+          llm_config: this.llmConfig
         });
 
         if (res.code === 200) {

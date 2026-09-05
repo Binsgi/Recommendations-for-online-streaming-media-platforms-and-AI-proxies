@@ -263,12 +263,17 @@
       <section v-if="activeTab === 'agent'" class="agent-workspace">
         <!-- 左侧：Agent 输入控制面板 -->
         <div class="agent-control-panel">
-          <div class="agent-header">
-            <img src="images/person01.png" class="agent-avatar-img" />
-            <div class="agent-title">
-              <h3>MelodyAI 音乐智能体</h3>
-              <p>感知心境 · 智能推荐 · 协同过滤</p>
+          <div class="agent-header" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="images/person01.png" class="agent-avatar-img" />
+              <div class="agent-title">
+                <h3>MelodyAI 音乐智能体</h3>
+                <p>{{ llmConfig.enabled && llmConfig.api_key ? ('✨ ' + llmConfig.model + ' 强力驱动') : '感知心境 · 智能推荐 · 协同过滤' }}</p>
+              </div>
             </div>
+            <button class="btn-outline" style="font-size: 11px; padding: 4px 8px; border-color: #c4b5fd; color: #6d28d9;" @click="openLlmModal" title="配置大模型 API">
+              ⚙️ 模型配置
+            </button>
           </div>
 
           <div class="agent-prompt-box">
@@ -522,6 +527,60 @@
           </div>
           <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; margin-top: 10px;">确认重置密码</button>
         </form>
+      </div>
+    </div>
+
+    <!-- ==================== 🤖 AI 大模型配置弹窗 ==================== -->
+    <div class="modal-mask" v-if="showLlmModal" @click.self="showLlmModal = false">
+      <div class="modal-card" style="width: 440px;">
+        <div class="modal-header">
+          <h3 style="font-size: 16px; font-weight: 700; color: #4c1d95;">⚙️ AI 大模型设置 (前端直配)</h3>
+          <span style="cursor: pointer; font-size: 18px;" @click="showLlmModal = false">✕</span>
+        </div>
+
+        <div class="form-group">
+          <label>启用外部大模型推理</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" v-model="llmConfig.enabled" id="enableLlm" />
+            <label for="enableLlm" style="margin-bottom: 0; cursor: pointer;">开启大模型智能推理（关闭时自动回退内置引擎）</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>预设服务商</label>
+          <select class="form-input" v-model="llmConfig.provider" @change="onLlmProviderChange">
+            <option value="deepseek">DeepSeek (深度求索 - 推荐)</option>
+            <option value="openai">OpenAI (ChatGPT / GPT-4o)</option>
+            <option value="qwen">阿里通义千问 (Qwen)</option>
+            <option value="moonshot">月之暗面 (Kimi / Moonshot)</option>
+            <option value="ollama">Ollama (本地私有大模型)</option>
+            <option value="custom">自定义 (Custom OpenAI API)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>API Endpoint (接口基础地址)</label>
+          <input type="text" class="form-input" v-model="llmConfig.endpoint" placeholder="例如: https://api.deepseek.com/v1" />
+        </div>
+
+        <div class="form-group">
+          <label>API Key (密钥，仅保存在本地)</label>
+          <input type="password" class="form-input" v-model="llmConfig.api_key" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" />
+        </div>
+
+        <div class="form-group">
+          <label>Model (模型名称)</label>
+          <input type="text" class="form-input" v-model="llmConfig.model" placeholder="例如: deepseek-chat, gpt-4o-mini" />
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+          <button type="button" class="btn-outline" style="flex: 1;" :disabled="testingLlm" @click="testLlmConfig">
+            {{ testingLlm ? '测试中...' : '🔌 测试连接' }}
+          </button>
+          <button type="button" class="btn-primary" style="flex: 1; background: linear-gradient(135deg, var(--agent-color), #a855f7);" @click="saveLlmConfig">
+            💾 保存配置
+          </button>
+        </div>
       </div>
     </div>
 
