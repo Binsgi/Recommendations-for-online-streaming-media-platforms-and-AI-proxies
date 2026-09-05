@@ -23,7 +23,7 @@ public:
     int mysql_pool_size = 10;
 
     // Netease API
-    std::string netease_api = "http://127.0.0.1:3000";
+    std::string netease_api = "http://10.95.6.100:3000";
     int api_timeout_sec = 5;
 
     // Cache & Security
