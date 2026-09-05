@@ -11,6 +11,19 @@ struct LLMConfig {
     bool enabled = false;
 };
 
+struct RecommendedTrack {
+    std::string name;
+    std::string artist;
+    std::string reason;
+};
+
+struct ExtractedIntent {
+    std::string summary;
+    std::vector<std::string> tags;
+    std::vector<std::string> search_keywords;
+    std::vector<RecommendedTrack> specific_tracks;
+};
+
 class AgentService {
 public:
     static AgentService& getInstance();
@@ -31,14 +44,9 @@ private:
     AgentService(const AgentService&) = delete;
     AgentService& operator=(const AgentService&) = delete;
 
-    struct ExtractedIntent {
-        std::string search_keyword;
-        std::string mood;
-        std::vector<std::string> tags;
-        std::string summary;
-    };
-
     ExtractedIntent analyzeWithLLM(const std::string& prompt, const std::string& mood, const std::string& genre, const LLMConfig& config);
-    ExtractedIntent analyzeIntent(const std::string& prompt, const std::string& mood, const std::string& genre);
-    std::string generateSongReason(const std::string& song_name, const std::string& artist, const ExtractedIntent& intent, int score);
+    ExtractedIntent analyzeWithKnowledgeBase(const std::string& prompt, const std::string& mood, const std::string& genre);
+    
+    // 根据具体推荐曲目列表 + 关键词检索并聚合网易云音乐信息
+    json fetchSongsForIntent(const ExtractedIntent& intent);
 };

@@ -44,9 +44,9 @@ new Vue({
       isCurrentSongFav: false,
 
       // 🤖 AI Agent 智能推荐
-      agentPrompt: '深夜写代码，来几首安静专注的Lo-Fi或轻音乐',
-      agentMood: '专注',
-      agentGenre: '轻音乐',
+      agentPrompt: '伤感流行音乐',
+      agentMood: '',
+      agentGenre: '',
       agentLoading: false,
       agentReply: null,
       agentPresetChips: [

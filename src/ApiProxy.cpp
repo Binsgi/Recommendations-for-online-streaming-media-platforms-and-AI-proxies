@@ -149,8 +149,10 @@ json ApiProxy::filterPlayableSongs(const json& raw_songs, const std::string& lev
 
     json urls_resp = batchGetSongUrls(song_ids, level);
     std::map<int64_t, std::string> playable_url_map;
+    bool has_urls_response = false;
 
-    if (urls_resp.contains("data") && urls_resp["data"].is_array()) {
+    if (urls_resp.contains("data") && urls_resp["data"].is_array() && urls_resp["data"].size() > 0) {
+        has_urls_response = true;
         const auto& data_arr = urls_resp["data"];
         for (size_t i = 0; i < data_arr.size(); ++i) {
             const auto& item = data_arr[i];
@@ -167,11 +169,15 @@ json ApiProxy::filterPlayableSongs(const json& raw_songs, const std::string& lev
     for (size_t i = 0; i < raw_songs.size(); ++i) {
         json song = raw_songs[i];
         int64_t sid = song["id"].as_int64();
+        int fee = song.contains("fee") ? song["fee"].as_int() : 0;
 
         auto it = playable_url_map.find(sid);
-        // 核心要求 4：把不能播放的音乐（url为空的歌曲）从剔除后再展示到前端
         if (it != playable_url_map.end() && !it->second.empty()) {
+            // 直链有效
             song["play_url"] = it->second;
+            filtered.push_back(song);
+        } else if (!has_urls_response && fee != 1) {
+            // 若批量直链获取未返回但歌曲为免费/可试听歌曲(fee!=1)，保留歌曲并在播放时单独拉取直链
             filtered.push_back(song);
         }
     }
