@@ -225,21 +225,31 @@ HttpResponse Router::handleStatic(const HttpRequest& req) {
         path = "/index.html";
     }
 
-    std::string full_path = root + path;
-    std::ifstream file(full_path, std::ios::binary);
-    if (!file.is_open()) {
-        // Fallback check: if requested /MusicPlayer.html or index.html
-        if (path == "/MusicPlayer.html") {
-            full_path = root + "/MusicPlayer.html";
-            std::ifstream file2(full_path, std::ios::binary);
-            if (file2.is_open()) {
+    // 智能多路径探测 (防止在 build/ 或 bin/ 目录下启动导致相对路径失效)
+    std::vector<std::string> candidate_roots = {
+        root,                    // e.g. "./web"
+        "../web",                // if started from build/ or bin/
+        "../../web",             // if started from nested build dir
+        ".",                     // if assets in root
+        ".."                     // if started from build and assets in root
+    };
+
+    std::vector<std::string> candidate_filenames = { path };
+    if (path == "/index.html" || path == "/") {
+        candidate_filenames.push_back("/MusicPlayer.html");
+    }
+
+    for (const auto& r : candidate_roots) {
+        for (const auto& f : candidate_filenames) {
+            std::string full_path = r + f;
+            std::ifstream file(full_path, std::ios::binary);
+            if (file.is_open()) {
                 return HttpResponse::file(full_path);
             }
         }
-        return HttpResponse::notFound("The requested resource was not found: " + path);
     }
 
-    return HttpResponse::file(full_path);
+    return HttpResponse::notFound("The requested resource was not found: " + path);
 }
 
 HttpResponse Router::dispatch(const HttpRequest& req) {

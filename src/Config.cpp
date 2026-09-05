@@ -19,6 +19,14 @@ std::string Config::trim(const std::string& str) {
 bool Config::load(const std::string& config_file) {
     std::ifstream file(config_file);
     if (!file.is_open()) {
+        // Try parent paths
+        file.open("../" + config_file);
+        if (!file.is_open()) {
+            file.open("../../" + config_file);
+        }
+    }
+
+    if (!file.is_open()) {
         std::cerr << "[Config] Warning: Could not open " << config_file << ", using default settings.\n";
         return false;
     }
