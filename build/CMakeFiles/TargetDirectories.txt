@@ -1,0 +1,3 @@
+/home/yana/demo-player/build/CMakeFiles/demo_player.dir
+/home/yana/demo-player/build/CMakeFiles/edit_cache.dir
+/home/yana/demo-player/build/CMakeFiles/rebuild_cache.dir
