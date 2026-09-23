@@ -6,7 +6,7 @@
 
 ## 🌟 核心特性与架构升级
 
-### 1. Modern C++17 重构
+### 1. Modern C++17 
 - 采用现代 C++17 标准（RAII、智能指针、STL 并发容器、读写锁 `std::shared_mutex`、`std::optional`）。
 - **Epoll Reactor 高并发服务端**：配合现代化线程池 `ThreadPool` 异步分发 HTTP 请求。
 - **CMake 项目构建**：支持在 Linux (Ubuntu 22.04) 上一键检测依赖并自动化编译。
@@ -180,14 +180,3 @@ make -j$(nproc)
 - `POST /api/agent/recommend`：
   - 请求参数：`{ "prompt": "深夜写代码专注音乐", "mood": "专注", "genre": "轻音乐" }`
   - 返回数据：包含 AI 智能体问候语、情绪标签萃取、匹配歌曲列表（附带**匹配度**与**AI 推荐理由**）。
-
----
-
-## 📦 Git 版本管理
-
-初始化并提交：
-```bash
-git init
-git add .
-git commit -m "feat: complete C++17 modernization with MySQL, CMake, Auth, Playlists, Filter & AI Agent"
-```
